@@ -1,30 +1,36 @@
 import os
 
-import requests
+import google.generativeai as genai
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
-URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-)
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel('gemini-pro')
 
-data = {
-    "contents": [
-        {
-            "parts": [
-                {"text": "Tell me a joke about HTML."}
-            ]
-        }
-    ]
-}
+prompt_template = """
+You are an expert at planning oversea trips.
 
-res = requests.post(
-    URL,
-    headers={
-        "content-type": "application/json",
-    },
-    json=data,
-    params={"key": os.getenv("GOOGLE_API_KEY")}
-)
-print(res.json())
+Please take the users request and plan a comprehensive trip for them.
+
+Please include the following details:
+- The destination
+- The duration of the trip
+- The activities that will be done
+- The accommodation
+
+The user's request is:
+{prompt}
+"""
+
+def generate_content(prompt):
+    response = model.generate_content(prompt)
+    return response.text
+
+st.title("🏝️ AI Travel Planning")
+
+prompt = st.text_area("Enter your next travel request (days, destination, activities, etc.):")
+if st.button("Give me a plan!"):
+    reply = generate_content(prompt)
+    st.write(reply)
